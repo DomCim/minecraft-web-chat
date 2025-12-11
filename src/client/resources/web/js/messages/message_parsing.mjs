@@ -524,8 +524,8 @@ export function assertIsComponent(component, path = []) {
         }
     }
 
-    // A component must have at least one content property or an extra array
-    // Content properties: text, translate, score, selector, keybind, nbt
+    // A component must have at least one content property
+    // Content properties: text, translate, score, selector, keybind, nbt, extra
     const hasContent =
         'text' in component ||
         'translate' in component ||
@@ -537,7 +537,7 @@ export function assertIsComponent(component, path = []) {
 
     if (!hasContent) {
         throw new ComponentError(
-            'Component must have at least one content property (text, translate, score, selector, keybind, nbt) or an extra array',
+            'Component must have at least one content property (text, translate, score, selector, keybind, nbt, extra)',
             path,
         );
     }
@@ -1407,6 +1407,8 @@ function formatComponent(component, translations) {
         // Score components display scoreboard values
         // Format: {score: {name: "player", objective: "obj"}}
         // We can't resolve actual scores on client, so display the reference
+        // Note: Validation ensures component.score is an object, but we use defensive programming
+        // to gracefully handle any unexpected runtime scenarios
         const scoreRef =
             typeof component.score === 'object' && component.score !== null
                 ? `${component.score.name ?? '?'}:${component.score.objective ?? '?'}`
