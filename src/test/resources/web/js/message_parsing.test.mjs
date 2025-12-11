@@ -24,11 +24,19 @@ const COMPONENT_VALIDATION_TESTS = [
     [
         'empty object is not a component',
         {},
-        'Component does not have a text, translate, or extra property',
+        'Component must have at least one content property',
     ],
     ['object with text is a component', { text: 'test' }, undefined],
     ['object with translate is a component', { translate: 'test' }, undefined],
     ['object with extra is a component', { extra: ['test'] }, undefined],
+    [
+        'object with score is a component',
+        { score: { name: 'player', objective: 'points' } },
+        undefined,
+    ],
+    ['object with selector is a component', { selector: '@a' }, undefined],
+    ['object with keybind is a component', { keybind: 'key.jump' }, undefined],
+    ['object with nbt is a component', { nbt: 'Items[0].Count' }, undefined],
 
     // Text property validation
     ['text must be string', { text: 42 }, 'Component.text is not a string'],
@@ -41,6 +49,38 @@ const COMPONENT_VALIDATION_TESTS = [
         'Component.translate is not a string',
     ],
     ['translate can be empty string', { translate: '' }, undefined],
+
+    // Score property validation
+    [
+        'score must be object',
+        { score: 'not an object' },
+        'Component.score is not an object',
+    ],
+    [
+        'score can be valid object',
+        { score: { name: 'player', objective: 'points' } },
+        undefined,
+    ],
+
+    // Selector property validation
+    [
+        'selector must be string',
+        { selector: 123 },
+        'Component.selector is not a string',
+    ],
+    ['selector can be valid string', { selector: '@a' }, undefined],
+
+    // Keybind property validation
+    [
+        'keybind must be string',
+        { keybind: 123 },
+        'Component.keybind is not a string',
+    ],
+    ['keybind can be valid string', { keybind: 'key.jump' }, undefined],
+
+    // NBT property validation
+    ['nbt must be string', { nbt: 123 }, 'Component.nbt is not a string'],
+    ['nbt can be valid string', { nbt: 'Items[0].Count' }, undefined],
 
     // Color validation
     [
@@ -100,7 +140,7 @@ const COMPONENT_VALIDATION_TESTS = [
     [
         'extra cannot contain invalid components',
         { text: 'test', extra: [{ invalid: true }] },
-        'Component does not have a text, translate, or extra property',
+        'Component must have at least one content property',
     ],
     ['extra can contain numbers', { text: 'test', extra: [42] }, undefined],
 
@@ -123,7 +163,7 @@ const COMPONENT_VALIDATION_TESTS = [
     [
         'with cannot contain invalid components',
         { translate: 'test', with: [{ invalid: true }] },
-        'Component does not have a text, translate, or extra property',
+        'Component must have at least one content property',
     ],
     ['with can contain numbers', { translate: 'test', with: [42] }, undefined],
 
@@ -339,6 +379,25 @@ const COMPONENT_FORMATTING_TESTS = [
         { translate: 'argument.id.invalid' },
         { 'argument.id.invalid': 'Invalid ID' },
         '<span>Invalid ID</span>',
+    ],
+    [
+        'component with score',
+        { score: { name: 'player', objective: 'points' } },
+        {},
+        '<span>player:points</span>',
+    ],
+    ['component with selector', { selector: '@a' }, {}, '<span>@a</span>'],
+    [
+        'component with keybind',
+        { keybind: 'key.jump' },
+        {},
+        '<span>key.jump</span>',
+    ],
+    [
+        'component with nbt',
+        { nbt: 'Items[0].Count' },
+        {},
+        '<span>Items[0].Count</span>',
     ],
 
     // Color formatting

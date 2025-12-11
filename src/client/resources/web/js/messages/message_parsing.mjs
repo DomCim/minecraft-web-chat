@@ -63,6 +63,10 @@ const VALID_CLICK_EVENTS = [
  * @typedef {Object} Component
  * @property {string} [text] - Text content
  * @property {string} [translate] - Translation key
+ * @property {Object} [score] - Scoreboard value reference with name and objective properties
+ * @property {string} [selector] - Entity selector (e.g., @a, @p)
+ * @property {string} [keybind] - Keybind name (e.g., key.jump)
+ * @property {string} [nbt] - NBT path for data display
  * @property {(number | string | Component)[]} [with] - Translation parameters
  * @property {(number | string | Component)[]} [extra] - Additional components to append
  * @property {string} [color] - Text color - can be a named color or hex value
@@ -520,13 +524,20 @@ export function assertIsComponent(component, path = []) {
         }
     }
 
-    if (
-        !('text' in component) &&
-        !('translate' in component) &&
-        !('extra' in component)
-    ) {
+    // A component must have at least one content property
+    // Content properties: text, translate, score, selector, keybind, nbt, extra
+    const hasContent =
+        'text' in component ||
+        'translate' in component ||
+        'score' in component ||
+        'selector' in component ||
+        'keybind' in component ||
+        'nbt' in component ||
+        'extra' in component;
+
+    if (!hasContent) {
         throw new ComponentError(
-            'Component does not have a text, translate, or extra property',
+            'Component must have at least one content property (text, translate, score, selector, keybind, nbt, extra)',
             path,
         );
     }
@@ -542,6 +553,34 @@ export function assertIsComponent(component, path = []) {
         throw new ComponentError('Component.translate is not a string', [
             ...path,
             'translate',
+        ]);
+    }
+
+    if ('score' in component && typeof component.score !== 'object') {
+        throw new ComponentError('Component.score is not an object', [
+            ...path,
+            'score',
+        ]);
+    }
+
+    if ('selector' in component && typeof component.selector !== 'string') {
+        throw new ComponentError('Component.selector is not a string', [
+            ...path,
+            'selector',
+        ]);
+    }
+
+    if ('keybind' in component && typeof component.keybind !== 'string') {
+        throw new ComponentError('Component.keybind is not a string', [
+            ...path,
+            'keybind',
+        ]);
+    }
+
+    if ('nbt' in component && typeof component.nbt !== 'string') {
+        throw new ComponentError('Component.nbt is not a string', [
+            ...path,
+            'nbt',
         ]);
     }
 
@@ -1364,6 +1403,29 @@ function formatComponent(component, translations) {
                 translations,
             ),
         );
+    } else if (component.score) {
+        // Score components display scoreboard values
+        // Format: {score: {name: "player", objective: "obj"}}
+        // We can't resolve actual scores on client, so display the reference
+        // Note: Validation ensures component.score is an object, but we use defensive programming
+        // to gracefully handle any unexpected runtime scenarios
+        const scoreRef =
+            typeof component.score === 'object' && component.score !== null
+                ? `${component.score.name ?? '?'}:${component.score.objective ?? '?'}`
+                : 'score';
+        result.appendChild(document.createTextNode(scoreRef));
+    } else if (component.selector) {
+        // Selector components display entity selectors like @a, @p, etc.
+        // We can't resolve selectors on client, so display the selector itself
+        result.appendChild(document.createTextNode(component.selector));
+    } else if (component.keybind) {
+        // Keybind components display keybind names
+        // Format: {keybind: "key.jump"}
+        result.appendChild(document.createTextNode(component.keybind));
+    } else if (component.nbt) {
+        // NBT components display NBT data
+        // We can't resolve NBT on client, so display the NBT path
+        result.appendChild(document.createTextNode(component.nbt));
     }
 
     if (component.extra) {
